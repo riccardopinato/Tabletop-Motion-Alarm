@@ -1,21 +1,17 @@
 package com.riccardopinato.tabletopalarm.ui
 
 import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
+import androidx.compose.foundation.selection.selectable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.History
-import androidx.compose.material.icons.filled.Notifications
-import androidx.compose.material.icons.filled.Person
-import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
@@ -29,8 +25,8 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -42,7 +38,6 @@ import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import com.riccardopinato.tabletopalarm.AppContainer
 import com.riccardopinato.tabletopalarm.auth.BiometricAuthManager
-import com.riccardopinato.tabletopalarm.auth.GoogleAccountManager
 import com.riccardopinato.tabletopalarm.model.AppSettings
 import com.riccardopinato.tabletopalarm.service.AlarmForegroundService
 import com.riccardopinato.tabletopalarm.service.AlarmPhase
@@ -59,14 +54,12 @@ import kotlinx.coroutines.launch
 
 private data class BottomDestination(
     val route: String,
-    val label: String,
-    val icon: ImageVector
+    val label: String
 )
 
 @Composable
 fun TabletopAlarmRoot(
     container: AppContainer,
-    googleAccountManager: GoogleAccountManager,
     biometricAuthManager: BiometricAuthManager
 ) {
     val context = LocalContext.current
@@ -123,18 +116,15 @@ fun TabletopAlarmRoot(
             listOf(
                 BottomDestination(
                     route = "alarm",
-                    label = "Allarme",
-                    icon = Icons.Default.Notifications
+                    label = "Allarme"
                 ),
                 BottomDestination(
                     route = "events",
-                    label = "Eventi",
-                    icon = Icons.Default.History
+                    label = "Eventi"
                 ),
                 BottomDestination(
                     route = "profile",
-                    label = "Profilo",
-                    icon = Icons.Default.Person
+                    label = "Profilo"
                 )
             )
 
@@ -200,7 +190,6 @@ fun TabletopAlarmRoot(
                     ProfileScreen(
                         settingsRepository = container.settingsRepository,
                         securityRepository = container.securityRepository,
-                        googleAccountManager = googleAccountManager,
                         biometricAuthManager = biometricAuthManager,
                         batteryDiagnostics = container.batteryDiagnostics,
                         onOpenAboutPrivacy = {
@@ -278,28 +267,21 @@ private fun UtilityBottomBar(
                 Column(
                     modifier = Modifier
                         .weight(1f)
+                        .heightIn(min = 48.dp)
                         .clip(MaterialTheme.shapes.medium)
-                        .clickable {
-                            if (!selected) {
-                                onNavigate(item.route)
+                        .selectable(
+                            selected = selected,
+                            role = Role.Tab,
+                            onClick = {
+                                if (!selected) {
+                                    onNavigate(item.route)
+                                }
                             }
-                        }
+                        )
                         .padding(vertical = 8.dp),
                     horizontalAlignment = Alignment.CenterHorizontally,
                     verticalArrangement = Arrangement.spacedBy(4.dp)
                 ) {
-                    Icon(
-                        imageVector = item.icon,
-                        contentDescription = item.label,
-                        tint =
-                            if (selected) {
-                                OmniAccent
-                            } else {
-                                MaterialTheme.colorScheme.onSurfaceVariant
-                            },
-                        modifier = Modifier.size(22.dp)
-                    )
-
                     Text(
                         text = item.label,
                         style = MaterialTheme.typography.labelMedium,

@@ -17,7 +17,7 @@ concurrency:
 jobs:
   android:
     runs-on: ubuntu-latest
-    timeout-minutes: 35
+    timeout-minutes: 45
 
     steps:
       - name: Checkout
@@ -35,11 +35,14 @@ jobs:
           gradle-version: '9.3.1'
           cache-provider: basic
 
-      - name: Unit tests
-        run: gradle :app:testDebugUnitTest --no-daemon --stacktrace
+      - name: Test, lint and build all release gates
+        run: |
+          gradle             :app:testDebugUnitTest             :app:lintRelease             :app:assembleDebug             :app:assembleRelease             :app:bundleRelease             --no-daemon             --stacktrace
 
-      - name: Lint release
-        run: gradle :app:lintRelease --no-daemon --stacktrace
-
-      - name: Build debug APK
-        run: gradle :app:assembleDebug --no-daemon --stacktrace
+      - name: Report artifact sizes
+        shell: bash
+        run: |
+          set -euo pipefail
+          ls -lh app/build/outputs/apk/debug/*.apk
+          ls -lh app/build/outputs/apk/release/*.apk
+          ls -lh app/build/outputs/bundle/release/*.aab

@@ -3,9 +3,9 @@
 Native Android utility (Kotlin + Jetpack Compose) that arms a motion alarm while the phone is resting on a table.
 
 - Package: `com.riccardopinato.tabletopalarm`
-- Current version: `1.0.0` (`versionCode 3` for the first persistent INTERNAL signing lane)
+- Current version: `1.0.0` (`versionCode 4` for the first persistent INTERNAL signing lane)
 - Android: minSdk 26 / targetSdk 37
-- Local-first, no ads, no backend.
+- Premium paid app, local-first, no ads, no subscription, no account, no backend.
 
 ## Signing
 
@@ -15,3 +15,12 @@ The repository never stores private signing material. GitHub Actions uses the fo
 ## UI
 
 Custom utility design system inspired by cleaner-style Android interfaces; Material 3 remains an implementation layer, not the visual identity.
+
+
+## Commercial model
+
+- Distribution: paid app on Google Play
+- Reference price: EUR 4.99
+- Periodic promotional price: EUR 3.99
+- All features are included after purchase
+- No in-app feature split and no Play Billing paywall inside the app

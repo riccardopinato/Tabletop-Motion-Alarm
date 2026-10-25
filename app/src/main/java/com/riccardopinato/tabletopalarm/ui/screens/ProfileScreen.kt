@@ -32,7 +32,6 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.riccardopinato.tabletopalarm.BuildConfig
 import com.riccardopinato.tabletopalarm.auth.BiometricAuthManager
-import com.riccardopinato.tabletopalarm.auth.GoogleAccountManager
 import com.riccardopinato.tabletopalarm.data.SecurityRepository
 import com.riccardopinato.tabletopalarm.data.SettingsRepository
 import com.riccardopinato.tabletopalarm.hardware.BatteryDiagnostics
@@ -42,7 +41,6 @@ import com.riccardopinato.tabletopalarm.model.AppSettings
 import com.riccardopinato.tabletopalarm.ui.components.SetPinDialog
 import com.riccardopinato.tabletopalarm.ui.components.SettingSwitchRow
 import com.riccardopinato.tabletopalarm.ui.components.UtilityPanel
-import com.riccardopinato.tabletopalarm.ui.components.UtilityPrimaryAction
 import com.riccardopinato.tabletopalarm.ui.components.UtilitySecondaryAction
 import com.riccardopinato.tabletopalarm.ui.theme.OmniAccent
 import com.riccardopinato.tabletopalarm.ui.theme.OmniDanger
@@ -52,7 +50,6 @@ import kotlinx.coroutines.launch
 fun ProfileScreen(
     settingsRepository: SettingsRepository,
     securityRepository: SecurityRepository,
-    googleAccountManager: GoogleAccountManager,
     biometricAuthManager: BiometricAuthManager,
     batteryDiagnostics: BatteryDiagnostics,
     onOpenAboutPrivacy: () -> Unit,
@@ -109,81 +106,16 @@ fun ProfileScreen(
             verticalArrangement = Arrangement.spacedBy(1.dp)
         ) {
             Text(
-                text = "ACCOUNT",
+                text = "IMPOSTAZIONI",
                 style = MaterialTheme.typography.labelMedium,
                 fontWeight = FontWeight.Bold,
                 color = OmniAccent
             )
 
             Text(
-                text = "Profilo",
+                text = "Profilo e sicurezza",
                 style = MaterialTheme.typography.headlineLarge
             )
-        }
-
-        UtilityPanel {
-            Column(
-                modifier = Modifier.padding(16.dp),
-                verticalArrangement = Arrangement.spacedBy(10.dp)
-            ) {
-                SectionTitle("Account Google")
-
-                val profile = settings.googleProfile
-
-                if (profile == null) {
-                    Text(
-                        text = "Accesso facoltativo per associare il profilo all'app.",
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
-
-                    UtilityPrimaryAction(
-                        label = "ACCEDI CON GOOGLE",
-                        enabled = !alarmRunning,
-                        onClick = {
-                            scope.launch {
-                                googleAccountManager
-                                    .signIn()
-                                    .onSuccess {
-                                        settingsRepository.saveGoogleProfile(it)
-                                        statusMessage = "Accesso Google completato."
-                                    }
-                                    .onFailure {
-                                        statusMessage =
-                                            it.message
-                                                ?: "Accesso Google non riuscito."
-                                    }
-                            }
-                        }
-                    )
-                } else {
-                    Text(
-                        text = profile.displayName ?: "Account Google",
-                        style = MaterialTheme.typography.bodyMedium,
-                        fontWeight = FontWeight.SemiBold
-                    )
-
-                    profile.email?.let {
-                        Text(
-                            text = it,
-                            style = MaterialTheme.typography.bodySmall,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant
-                        )
-                    }
-
-                    UtilitySecondaryAction(
-                        label = "Esci dall'account",
-                        enabled = !alarmRunning,
-                        onClick = {
-                            scope.launch {
-                                googleAccountManager.signOut()
-                                settingsRepository.clearGoogleProfile()
-                                statusMessage = "Account scollegato."
-                            }
-                        }
-                    )
-                }
-            }
         }
 
         UtilityPanel {
@@ -382,7 +314,7 @@ fun ProfileScreen(
         }
 
         Text(
-            text = "Versione \${BuildConfig.VERSION_NAME}",
+            text = "Versione ${BuildConfig.VERSION_NAME}",
             style = MaterialTheme.typography.bodySmall,
             color = MaterialTheme.colorScheme.onSurfaceVariant
         )

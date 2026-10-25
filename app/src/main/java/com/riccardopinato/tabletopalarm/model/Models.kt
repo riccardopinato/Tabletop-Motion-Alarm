@@ -14,13 +14,6 @@ enum class Sensitivity {
         }
 }
 
-data class GoogleProfile(
-    val id: String,
-    val displayName: String?,
-    val email: String?,
-    val photoUrl: String?
-)
-
 data class AppSettings(
     val countdownSeconds: Int = 5,
     val sensitivity: Sensitivity = Sensitivity.MEDIUM,
@@ -28,8 +21,7 @@ data class AppSettings(
     val vibrationEnabled: Boolean = true,
     val flashEnabled: Boolean = true,
     val biometricEnabled: Boolean = false,
-    val onboardingCompleted: Boolean = false,
-    val googleProfile: GoogleProfile? = null
+    val onboardingCompleted: Boolean = false
 )
 
 enum class AlarmEventType {

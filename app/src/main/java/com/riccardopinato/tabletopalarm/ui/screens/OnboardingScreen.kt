@@ -13,11 +13,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Lock
-import androidx.compose.material.icons.filled.Notifications
-import androidx.compose.material.icons.filled.Security
-import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
@@ -29,7 +24,6 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
@@ -40,7 +34,6 @@ import com.riccardopinato.tabletopalarm.ui.theme.OmniHeroMuted
 import com.riccardopinato.tabletopalarm.ui.theme.OmniHeroText
 
 private data class OnboardingPage(
-    val icon: ImageVector,
     val title: String,
     val text: String
 )
@@ -52,17 +45,14 @@ fun OnboardingScreen(
     val pages = remember {
         listOf(
             OnboardingPage(
-                icon = Icons.Default.Security,
                 title = "Proteggi il telefono",
                 text = "Appoggia il dispositivo, attiva l'allarme e lascia che i sensori controllino eventuali movimenti."
             ),
             OnboardingPage(
-                icon = Icons.Default.Notifications,
                 title = "Reazione immediata",
                 text = "Se il telefono viene spostato o sollevato, partono sirena, vibrazione e flash LED."
             ),
             OnboardingPage(
-                icon = Icons.Default.Lock,
                 title = "Solo tu puoi fermarlo",
                 text = "Configura un PIN e, se disponibile, usa la biometria per disattivare rapidamente l'allarme."
             )
@@ -122,11 +112,11 @@ fun OnboardingScreen(
                         .background(OmniAccent.copy(alpha = 0.16f)),
                     contentAlignment = Alignment.Center
                 ) {
-                    Icon(
-                        imageVector = current.icon,
-                        contentDescription = null,
-                        tint = OmniAccent,
-                        modifier = Modifier.size(34.dp)
+                    Text(
+                        text = (page + 1).toString().padStart(2, '0'),
+                        style = MaterialTheme.typography.titleLarge,
+                        fontWeight = FontWeight.Bold,
+                        color = OmniAccent
                     )
                 }
 
