@@ -6,7 +6,6 @@ import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.fragment.app.FragmentActivity
 import com.riccardopinato.tabletopalarm.auth.BiometricAuthManager
-import com.riccardopinato.tabletopalarm.auth.GoogleAccountManager
 import com.riccardopinato.tabletopalarm.ui.TabletopAlarmRoot
 import com.riccardopinato.tabletopalarm.ui.theme.TabletopAlarmTheme
 
@@ -25,16 +24,6 @@ class MainActivity : FragmentActivity() {
             (application as TabletopAlarmApp)
                 .container
 
-        val googleAccountManager =
-            GoogleAccountManager(
-                activity = this,
-                webClientId =
-                    getString(
-                        R.string
-                            .google_web_client_id
-                    )
-            )
-
         val biometricAuthManager =
             BiometricAuthManager(this)
 
@@ -42,8 +31,6 @@ class MainActivity : FragmentActivity() {
             TabletopAlarmTheme {
                 TabletopAlarmRoot(
                     container = container,
-                    googleAccountManager =
-                        googleAccountManager,
                     biometricAuthManager =
                         biometricAuthManager
                 )
