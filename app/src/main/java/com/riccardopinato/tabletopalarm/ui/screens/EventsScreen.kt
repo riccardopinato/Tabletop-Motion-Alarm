@@ -1,102 +1,119 @@
-// TARGET: app/src/main/java/com/riccardopinato/tabletopalarm/ui/screens/EventsScreen.kt
 package com.riccardopinato.tabletopalarm.ui.screens
 
+import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
-import androidx.compose.material3.Card
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.riccardopinato.tabletopalarm.data.EventRepository
 import com.riccardopinato.tabletopalarm.model.AlarmEvent
 import com.riccardopinato.tabletopalarm.model.AlarmEventType
+import com.riccardopinato.tabletopalarm.ui.components.UtilityPanel
+import com.riccardopinato.tabletopalarm.ui.theme.OmniAccent
+import com.riccardopinato.tabletopalarm.ui.theme.OmniDanger
+import com.riccardopinato.tabletopalarm.ui.theme.OmniWarning
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
 
 @Composable
 fun EventsScreen(
-    eventRepository:
-        EventRepository
+    eventRepository: EventRepository
 ) {
     val events by
-        eventRepository
-            .events
-            .collectAsStateWithLifecycle()
+        eventRepository.events.collectAsStateWithLifecycle()
 
     Column(
-        modifier =
-            Modifier
-                .fillMaxSize()
-                .padding(
-                    horizontal = 20.dp
-                )
+        modifier = Modifier
+            .fillMaxSize()
+            .padding(horizontal = 18.dp),
+        verticalArrangement = Arrangement.spacedBy(12.dp)
     ) {
         Row(
-            modifier =
-                Modifier
-                    .fillMaxWidth()
-                    .padding(
-                        top = 20.dp,
-                        bottom = 12.dp
-                    ),
-            horizontalArrangement =
-                Arrangement
-                    .SpaceBetween
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(top = 16.dp, bottom = 2.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.SpaceBetween
         ) {
-            Text(
-                "Eventi",
-                style =
-                    MaterialTheme
-                        .typography
-                        .headlineSmall
-            )
+            Column(
+                verticalArrangement = Arrangement.spacedBy(1.dp)
+            ) {
+                Text(
+                    text = "CRONOLOGIA",
+                    style = MaterialTheme.typography.labelMedium,
+                    color = OmniAccent,
+                    fontWeight = FontWeight.Bold
+                )
+
+                Text(
+                    text = "Eventi",
+                    style = MaterialTheme.typography.headlineLarge
+                )
+            }
 
             if (events.isNotEmpty()) {
-                TextButton(
-                    onClick =
-                        eventRepository::clear
-                ) {
-                    Text("Cancella")
-                }
+                Text(
+                    text = "Cancella",
+                    modifier = Modifier
+                        .clip(MaterialTheme.shapes.small)
+                        .clickable(onClick = eventRepository::clear)
+                        .padding(horizontal = 10.dp, vertical = 8.dp),
+                    style = MaterialTheme.typography.labelLarge,
+                    color = OmniDanger
+                )
             }
         }
 
         if (events.isEmpty()) {
-            Text(
-                "Nessun evento registrato.",
-                color =
-                    MaterialTheme
-                        .colorScheme
-                        .onSurfaceVariant
-            )
+            UtilityPanel {
+                Column(
+                    modifier = Modifier.padding(18.dp),
+                    verticalArrangement = Arrangement.spacedBy(4.dp)
+                ) {
+                    Text(
+                        text = "Nessun evento",
+                        style = MaterialTheme.typography.titleMedium,
+                        fontWeight = FontWeight.Bold
+                    )
+
+                    Text(
+                        text = "Le attivazioni e i rilevamenti compariranno qui.",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
+            }
         } else {
             LazyColumn(
-                verticalArrangement =
-                    Arrangement.spacedBy(
-                        10.dp
-                    )
+                contentPadding = PaddingValues(bottom = 22.dp),
+                verticalArrangement = Arrangement.spacedBy(9.dp)
             ) {
                 items(
                     items = events,
-                    key = {
-                        it.id
-                    }
-                ) {
-                    event ->
-
-                    EventCard(event)
+                    key = { it.id }
+                ) { event ->
+                    EventPanel(event)
                 }
             }
         }
@@ -104,81 +121,74 @@ fun EventsScreen(
 }
 
 @Composable
-private fun EventCard(
+private fun EventPanel(
     event: AlarmEvent
 ) {
-    Card {
-        Column(
-            modifier =
-                Modifier
-                    .fillMaxWidth()
-                    .padding(14.dp),
-            verticalArrangement =
-                Arrangement.spacedBy(
-                    4.dp
-                )
+    UtilityPanel {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(15.dp),
+            verticalAlignment = Alignment.Top,
+            horizontalArrangement = Arrangement.spacedBy(12.dp)
         ) {
-            Text(
-                event.type
-                    .toItalianLabel(),
-                style =
-                    MaterialTheme
-                        .typography
-                        .titleMedium
+            Box(
+                modifier = Modifier
+                    .padding(top = 5.dp)
+                    .size(9.dp)
+                    .clip(CircleShape)
+                    .background(eventAccent(event.type))
             )
 
-            Text(
-                formatEventTimestamp(
-                    event.timestamp
-                ),
-                style =
-                    MaterialTheme
-                        .typography
-                        .bodySmall,
-                color =
-                    MaterialTheme
-                        .colorScheme
-                        .onSurfaceVariant
-            )
-
-            if (
-                event.detail.isNotBlank()
+            Column(
+                modifier = Modifier.weight(1f),
+                verticalArrangement = Arrangement.spacedBy(3.dp)
             ) {
                 Text(
-                    event.detail,
-                    style =
-                        MaterialTheme
-                            .typography
-                            .bodySmall
+                    text = event.type.toItalianLabel(),
+                    style = MaterialTheme.typography.bodyMedium,
+                    fontWeight = FontWeight.SemiBold
                 )
+
+                Text(
+                    text = formatEventTimestamp(event.timestamp),
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+
+                if (event.detail.isNotBlank()) {
+                    Text(
+                        text = event.detail,
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
             }
         }
     }
 }
 
-private fun AlarmEventType
-    .toItalianLabel(): String =
-    when (this) {
-        AlarmEventType
-            .ARMING_STARTED ->
-            "Armamento avviato"
-
-        AlarmEventType.ARMED ->
-            "Allarme armato"
-
-        AlarmEventType.TRIGGERED ->
-            "Movimento rilevato"
-
-        AlarmEventType.DISARMED ->
-            "Allarme disattivato"
-
-        AlarmEventType.CANCELED ->
-            "Armamento annullato"
-
-        AlarmEventType.ERROR ->
-            "Errore"
+private fun eventAccent(
+    type: AlarmEventType
+): Color =
+    when (type) {
+        AlarmEventType.ARMING_STARTED -> OmniWarning
+        AlarmEventType.ARMED -> OmniAccent
+        AlarmEventType.TRIGGERED -> OmniDanger
+        AlarmEventType.DISARMED -> OmniAccent
+        AlarmEventType.CANCELED -> OmniWarning
+        AlarmEventType.ERROR -> OmniDanger
     }
 
+private fun AlarmEventType.toItalianLabel(): String =
+    when (this) {
+        AlarmEventType.ARMING_STARTED -> "Armamento avviato"
+        AlarmEventType.ARMED -> "Allarme armato"
+        AlarmEventType.TRIGGERED -> "Movimento rilevato"
+        AlarmEventType.DISARMED -> "Allarme disattivato"
+        AlarmEventType.CANCELED -> "Armamento annullato"
+        AlarmEventType.ERROR -> "Errore"
+    }
 
 private fun formatEventTimestamp(
     timestamp: Long
@@ -186,6 +196,4 @@ private fun formatEventTimestamp(
     SimpleDateFormat(
         "dd/MM/yyyy HH:mm:ss",
         Locale.getDefault()
-    ).format(
-        Date(timestamp)
-    )
+    ).format(Date(timestamp))
