@@ -87,9 +87,9 @@ fun AboutPrivacyScreen(
         )
 
         InfoPanel(
-            title = "Account Google",
+            title = "Nessun account",
             text =
-                "L'accesso Google è facoltativo e viene utilizzato per associare un profilo all'app. Nome, indirizzo email e identificativo del profilo possono essere conservati localmente nelle preferenze dell'app. Il PIN di sicurezza non viene sincronizzato con l'account Google."
+                "Tabletop Motion Alarm non richiede registrazione o login. Le funzioni principali operano localmente sul dispositivo e non dipendono da un account proprietario."
         )
 
         InfoPanel(
