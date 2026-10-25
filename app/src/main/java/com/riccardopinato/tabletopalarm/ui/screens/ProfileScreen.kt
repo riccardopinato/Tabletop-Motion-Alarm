@@ -314,7 +314,7 @@ fun ProfileScreen(
         }
 
         Text(
-            text = "Versione \${BuildConfig.VERSION_NAME}",
+            text = "Versione ${BuildConfig.VERSION_NAME}",
             style = MaterialTheme.typography.bodySmall,
             color = MaterialTheme.colorScheme.onSurfaceVariant
         )
