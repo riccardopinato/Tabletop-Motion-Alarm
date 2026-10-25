@@ -42,7 +42,6 @@ import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import com.riccardopinato.tabletopalarm.AppContainer
 import com.riccardopinato.tabletopalarm.auth.BiometricAuthManager
-import com.riccardopinato.tabletopalarm.auth.GoogleAccountManager
 import com.riccardopinato.tabletopalarm.model.AppSettings
 import com.riccardopinato.tabletopalarm.service.AlarmForegroundService
 import com.riccardopinato.tabletopalarm.service.AlarmPhase
@@ -66,7 +65,6 @@ private data class BottomDestination(
 @Composable
 fun TabletopAlarmRoot(
     container: AppContainer,
-    googleAccountManager: GoogleAccountManager,
     biometricAuthManager: BiometricAuthManager
 ) {
     val context = LocalContext.current
@@ -200,7 +198,6 @@ fun TabletopAlarmRoot(
                     ProfileScreen(
                         settingsRepository = container.settingsRepository,
                         securityRepository = container.securityRepository,
-                        googleAccountManager = googleAccountManager,
                         biometricAuthManager = biometricAuthManager,
                         batteryDiagnostics = container.batteryDiagnostics,
                         onOpenAboutPrivacy = {
