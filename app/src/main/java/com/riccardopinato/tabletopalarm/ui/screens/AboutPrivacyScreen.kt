@@ -46,7 +46,7 @@ fun AboutPrivacyScreen(
             )
 
             Text(
-                text = "v\${BuildConfig.VERSION_NAME}",
+                text = "v${BuildConfig.VERSION_NAME}",
                 style = MaterialTheme.typography.labelMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
