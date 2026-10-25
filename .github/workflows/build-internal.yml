@@ -1,7 +1,10 @@
 name: Build signed INTERNAL
 
 on:
-  workflow_dispatch:
+  workflow_dispatch: {}
+  push:
+    tags:
+      - "internal-v*"
 
 permissions:
   contents: read
