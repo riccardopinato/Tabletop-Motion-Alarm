@@ -1,18 +1,14 @@
-// TARGET: app/src/main/java/com/riccardopinato/tabletopalarm/ui/components/PermissionInfoDialog.kt
 package com.riccardopinato.tabletopalarm.ui.components
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.CameraAlt
-import androidx.compose.material.icons.filled.Notifications
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
-import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 
 @Composable
@@ -37,59 +33,17 @@ fun PermissionInfoDialog(
                 )
 
                 if (needsCamera) {
-                    Column(
-                        verticalArrangement =
-                            Arrangement.spacedBy(4.dp)
-                    ) {
-                        Icon(
-                            Icons.Default.CameraAlt,
-                            contentDescription = null
-                        )
-
-                        Text(
-                            "Fotocamera",
-                            style =
-                                MaterialTheme
-                                    .typography
-                                    .titleSmall
-                        )
-
-                        Text(
-                            "Serve esclusivamente per controllare il flash LED. L'app non scatta foto.",
-                            style =
-                                MaterialTheme
-                                    .typography
-                                    .bodySmall
-                        )
-                    }
+                    PermissionExplanation(
+                        title = "FLASH LED",
+                        text = "Il permesso Fotocamera serve esclusivamente per controllare la torcia. L'app non scatta foto e non registra video."
+                    )
                 }
 
                 if (needsNotifications) {
-                    Column(
-                        verticalArrangement =
-                            Arrangement.spacedBy(4.dp)
-                    ) {
-                        Icon(
-                            Icons.Default.Notifications,
-                            contentDescription = null
-                        )
-
-                        Text(
-                            "Notifiche",
-                            style =
-                                MaterialTheme
-                                    .typography
-                                    .titleSmall
-                        )
-
-                        Text(
-                            "Servono per mostrare chiaramente quando la protezione è attiva e quando viene rilevato movimento.",
-                            style =
-                                MaterialTheme
-                                    .typography
-                                    .bodySmall
-                        )
-                    }
+                    PermissionExplanation(
+                        title = "NOTIFICHE",
+                        text = "Servono per mostrare quando la protezione è attiva e quando viene rilevato movimento."
+                    )
                 }
             }
         },
@@ -108,4 +62,32 @@ fun PermissionInfoDialog(
             }
         }
     )
+}
+
+@Composable
+private fun PermissionExplanation(
+    title: String,
+    text: String
+) {
+    Column(
+        verticalArrangement =
+            Arrangement.spacedBy(4.dp)
+    ) {
+        Text(
+            text = title,
+            style =
+                MaterialTheme
+                    .typography
+                    .labelMedium,
+            fontWeight = FontWeight.Bold
+        )
+
+        Text(
+            text = text,
+            style =
+                MaterialTheme
+                    .typography
+                    .bodySmall
+        )
+    }
 }
