@@ -1,6 +1,12 @@
 name: Bootstrap Android source
 
 on:
+  push:
+    branches:
+      - bootstrap/source-import-v2
+    paths:
+      - ".github/workflows/bootstrap-source.yml"
+      - ".bootstrap/**"
   workflow_dispatch:
 
 permissions:
