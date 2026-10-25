@@ -20,6 +20,7 @@ import com.riccardopinato.tabletopalarm.R
 import com.riccardopinato.tabletopalarm.TabletopAlarmApp
 import com.riccardopinato.tabletopalarm.model.AlarmEventType
 import com.riccardopinato.tabletopalarm.model.AppSettings
+import com.riccardopinato.tabletopalarm.sensor.MotionCalibration
 import com.riccardopinato.tabletopalarm.sensor.MotionDetector
 import com.riccardopinato.tabletopalarm.sensor.MotionTrigger
 import kotlinx.coroutines.CoroutineScope
@@ -206,7 +207,11 @@ class AlarmForegroundService : Service() {
     }
 
     private fun startMotionMonitoring(
-        settings: AppSettings
+        settings: AppSettings,
+        initialCalibration:
+            MotionCalibration? = null,
+        recordArmedEvent:
+            Boolean = true
     ) {
         motionDetector?.stop()
 
@@ -216,8 +221,10 @@ class AlarmForegroundService : Service() {
                     applicationContext,
                 sensitivity =
                     settings.sensitivity,
+                initialCalibration =
+                    initialCalibration,
                 onCalibrated = {
-                    noiseFloor ->
+                    calibration ->
 
                     AlarmStateStore.update(
                         AlarmRuntimeState(
@@ -230,18 +237,21 @@ class AlarmForegroundService : Service() {
                     )
 
                     container.sessionStateRepository.savePhase(AlarmPhase.ARMED)
+                    container.sessionStateRepository.saveCalibration(calibration)
 
-                    container
-                        .eventRepository
-                        .add(
-                            AlarmEventType.ARMED,
-                            "Noise floor " +
-                                String.format(
-                                    Locale.US,
-                                    "%.3f m/s²",
-                                    noiseFloor
-                                )
-                        )
+                    if (recordArmedEvent) {
+                        container
+                            .eventRepository
+                            .add(
+                                AlarmEventType.ARMED,
+                                "Noise floor " +
+                                    String.format(
+                                        Locale.US,
+                                        "%.3f m/s²",
+                                        calibration.noiseFloor
+                                    )
+                            )
+                    }
 
                     updateNotification(
                         AlarmPhase.ARMED,
@@ -617,10 +627,27 @@ class AlarmForegroundService : Service() {
                     return
                 }
 
+        // START_STICKY recovery must enter foreground before suspend work.
+        if (persisted.phase == AlarmPhase.TRIGGERED) {
+            startAsForeground(
+                phase = AlarmPhase.TRIGGERED,
+                title = "⚠ Movimento rilevato",
+                text = "Ripristino allarme. Apri l'app per disattivarlo."
+            )
+        } else {
+            startAsForeground(
+                phase = AlarmPhase.CALIBRATING,
+                title = "Ripristino protezione",
+                text = "Riattivazione monitoraggio sensori."
+            )
+        }
+
         acquireWakeLock()
 
         serviceScope.launch {
-            val settings = container.settingsRepository.settings.first()
+            val settings =
+                container.settingsRepository.settings.first()
+
             activeSettings = settings
 
             when (persisted.phase) {
@@ -629,33 +656,37 @@ class AlarmForegroundService : Service() {
                         AlarmRuntimeState(
                             phase = AlarmPhase.TRIGGERED,
                             message = "Movimento rilevato!",
-                            triggeredAt = persisted.updatedAt
+                            triggeredAt = persisted.updatedAtWallClock
                         )
                     )
-                    startAsForeground(
-                        phase = AlarmPhase.TRIGGERED,
-                        title = "⚠ Movimento rilevato",
-                        text = "Apri l'app e autenticati per fermare l'allarme."
-                    )
+
                     outputController.start(settings)
                 }
 
-                AlarmPhase.ARMING,
-                AlarmPhase.CALIBRATING,
                 AlarmPhase.ARMED -> {
-                    AlarmStateStore.update(
-                        AlarmRuntimeState(
-                            phase = AlarmPhase.CALIBRATING,
-                            message = "Ripristino protezione e ricalibrazione…"
+                    val calibration = persisted.calibration
+
+                    if (calibration != null) {
+                        AlarmStateStore.update(
+                            AlarmRuntimeState(
+                                phase = AlarmPhase.CALIBRATING,
+                                message = "Ripristino protezione…"
+                            )
                         )
-                    )
-                    container.sessionStateRepository.savePhase(AlarmPhase.CALIBRATING)
-                    startAsForeground(
-                        phase = AlarmPhase.CALIBRATING,
-                        title = "Ripristino protezione",
-                        text = "Ricalibrazione sensori in corso."
-                    )
-                    startMotionMonitoring(settings)
+
+                        startMotionMonitoring(
+                            settings = settings,
+                            initialCalibration = calibration,
+                            recordArmedEvent = false
+                        )
+                    } else {
+                        restartWithFreshCalibration(settings)
+                    }
+                }
+
+                AlarmPhase.ARMING,
+                AlarmPhase.CALIBRATING -> {
+                    restartWithFreshCalibration(settings)
                 }
 
                 AlarmPhase.DISARMED,
@@ -666,6 +697,32 @@ class AlarmForegroundService : Service() {
                 }
             }
         }
+    }
+
+    private fun restartWithFreshCalibration(
+        settings: AppSettings
+    ) {
+        AlarmStateStore.update(
+            AlarmRuntimeState(
+                phase = AlarmPhase.CALIBRATING,
+                message = "Ripristino protezione e ricalibrazione…"
+            )
+        )
+
+        container.sessionStateRepository.savePhase(
+            AlarmPhase.CALIBRATING
+        )
+
+        updateNotification(
+            AlarmPhase.CALIBRATING,
+            "Ripristino protezione",
+            "Ricalibrazione sensori in corso."
+        )
+
+        startMotionMonitoring(
+            settings = settings,
+            recordArmedEvent = false
+        )
     }
 
     override fun onDestroy() {
