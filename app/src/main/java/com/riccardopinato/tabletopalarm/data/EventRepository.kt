@@ -1,7 +1,7 @@
-// TARGET: app/src/main/java/com/riccardopinato/tabletopalarm/data/EventRepository.kt
 package com.riccardopinato.tabletopalarm.data
 
 import android.content.Context
+import android.util.AtomicFile
 import com.riccardopinato.tabletopalarm.model.AlarmEvent
 import com.riccardopinato.tabletopalarm.model.AlarmEventType
 import kotlinx.coroutines.CoroutineScope
@@ -16,18 +16,35 @@ import kotlinx.coroutines.sync.withLock
 import org.json.JSONArray
 import org.json.JSONObject
 import java.io.File
+import kotlin.math.max
 
 class EventRepository(context: Context) {
 
-    private val file = File(context.filesDir, "events.json")
+    private val file =
+        File(
+            context.filesDir,
+            "events.json"
+        )
+
+    private val atomicFile =
+        AtomicFile(file)
+
     private val scope =
-        CoroutineScope(SupervisorJob() + Dispatchers.IO)
-    private val mutex = Mutex()
+        CoroutineScope(
+            SupervisorJob() +
+                Dispatchers.IO
+        )
+
+    private val mutex =
+        Mutex()
 
     private val _events =
-        MutableStateFlow(loadFromDisk())
+        MutableStateFlow(
+            loadFromDisk()
+        )
 
-    val events: StateFlow<List<AlarmEvent>> =
+    val events:
+        StateFlow<List<AlarmEvent>> =
         _events.asStateFlow()
 
     fun add(
@@ -36,19 +53,35 @@ class EventRepository(context: Context) {
     ) {
         scope.launch {
             mutex.withLock {
-                val event = AlarmEvent(
-                    id = System.nanoTime(),
-                    timestamp = System.currentTimeMillis(),
-                    type = type,
-                    detail = detail
-                )
+                val now =
+                    System.currentTimeMillis()
+
+                val event =
+                    AlarmEvent(
+                        id =
+                            nextEventId(
+                                now
+                            ),
+                        timestamp =
+                            now,
+                        type =
+                            type,
+                        detail =
+                            detail
+                    )
 
                 val updated =
-                    (listOf(event) + _events.value)
-                        .take(MAX_EVENTS)
+                    (
+                        listOf(event) +
+                            _events.value
+                        )
+                        .take(
+                            MAX_EVENTS
+                        )
 
                 persist(updated)
-                _events.value = updated
+                _events.value =
+                    updated
             }
         }
     }
@@ -56,60 +89,175 @@ class EventRepository(context: Context) {
     fun clear() {
         scope.launch {
             mutex.withLock {
-                persist(emptyList())
-                _events.value = emptyList()
+                persist(
+                    emptyList()
+                )
+
+                _events.value =
+                    emptyList()
             }
         }
     }
 
-    private fun loadFromDisk(): List<AlarmEvent> {
-        if (!file.exists()) return emptyList()
+    private fun nextEventId(
+        nowMillis: Long
+    ): Long {
+        val timeBased =
+            nowMillis *
+                ID_MULTIPLIER
+
+        val lastId =
+            _events.value
+                .maxOfOrNull {
+                    it.id
+                }
+                ?: 0L
+
+        return max(
+            timeBased,
+            lastId + 1L
+        )
+    }
+
+    private fun loadFromDisk():
+        List<AlarmEvent> {
+
+        if (!file.exists()) {
+            return emptyList()
+        }
 
         return runCatching {
-            val array = JSONArray(file.readText())
+            val raw =
+                atomicFile
+                    .openRead()
+                    .bufferedReader(
+                        Charsets.UTF_8
+                    )
+                    .use {
+                        it.readText()
+                    }
+
+            val array =
+                JSONArray(raw)
 
             buildList {
-                for (i in 0 until array.length()) {
-                    val item = array.getJSONObject(i)
+                for (
+                    i in
+                    0 until
+                        array.length()
+                ) {
+                    val item =
+                        array
+                            .getJSONObject(
+                                i
+                            )
 
                     add(
                         AlarmEvent(
-                            id = item.optLong("id"),
-                            timestamp = item.optLong("timestamp"),
-                            type = runCatching {
-                                AlarmEventType.valueOf(
-                                    item.optString("type")
-                                )
-                            }.getOrDefault(
-                                AlarmEventType.ERROR
-                            ),
-                            detail = item.optString("detail")
+                            id =
+                                item
+                                    .optLong(
+                                        "id"
+                                    ),
+                            timestamp =
+                                item
+                                    .optLong(
+                                        "timestamp"
+                                    ),
+                            type =
+                                runCatching {
+                                    AlarmEventType
+                                        .valueOf(
+                                            item
+                                                .optString(
+                                                    "type"
+                                                )
+                                        )
+                                }
+                                    .getOrDefault(
+                                        AlarmEventType
+                                            .ERROR
+                                    ),
+                            detail =
+                                item
+                                    .optString(
+                                        "detail"
+                                    )
                         )
                     )
                 }
             }
-        }.getOrDefault(emptyList())
+        }
+            .getOrDefault(
+                emptyList()
+            )
     }
 
     private fun persist(
         events: List<AlarmEvent>
     ) {
-        val array = JSONArray()
+        val array =
+            JSONArray()
 
-        events.forEach { event ->
+        events.forEach {
+            event ->
+
             array.put(
                 JSONObject()
-                    .put("id", event.id)
-                    .put("timestamp", event.timestamp)
-                    .put("type", event.type.name)
-                    .put("detail", event.detail)
+                    .put(
+                        "id",
+                        event.id
+                    )
+                    .put(
+                        "timestamp",
+                        event.timestamp
+                    )
+                    .put(
+                        "type",
+                        event.type.name
+                    )
+                    .put(
+                        "detail",
+                        event.detail
+                    )
             )
         }
 
-        file.writeText(array.toString())
+        val output =
+            atomicFile
+                .startWrite()
+
+        try {
+            output.write(
+                array
+                    .toString()
+                    .toByteArray(
+                        Charsets.UTF_8
+                    )
+            )
+
+            atomicFile
+                .finishWrite(
+                    output
+                )
+        } catch (
+            throwable:
+                Throwable
+        ) {
+            atomicFile
+                .failWrite(
+                    output
+                )
+
+            throw throwable
+        }
     }
 
     private companion object {
-        const val MAX_EVENTS = 200
+        const val MAX_EVENTS =
+            200
+
+        const val ID_MULTIPLIER =
+            1_000L
     }
 }
