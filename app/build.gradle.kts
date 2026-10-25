@@ -83,12 +83,11 @@ dependencies {
 
     implementation("androidx.core:core-ktx:1.19.0")
     implementation("androidx.activity:activity-compose:1.13.0")
-    implementation("androidx.fragment:fragment-ktx:1.9.0")
+    implementation("androidx.fragment:fragment:1.9.0")
     implementation("androidx.lifecycle:lifecycle-runtime-compose:2.11.0")
     implementation("androidx.navigation:navigation-compose:2.10.1")
 
     implementation("androidx.compose.ui:ui")
-    implementation("androidx.compose.ui:ui-tooling-preview")
     implementation("androidx.compose.material3:material3")
 
     implementation("androidx.datastore:datastore-preferences:1.2.1")
