@@ -107,12 +107,6 @@ fun EventsScreen(
 private fun EventCard(
     event: AlarmEvent
 ) {
-    val dateFormat =
-        SimpleDateFormat(
-            "dd/MM/yyyy HH:mm:ss",
-            Locale.getDefault()
-        )
-
     Card {
         Column(
             modifier =
@@ -134,10 +128,8 @@ private fun EventCard(
             )
 
             Text(
-                dateFormat.format(
-                    Date(
-                        event.timestamp
-                    )
+                formatEventTimestamp(
+                    event.timestamp
                 ),
                 style =
                     MaterialTheme
@@ -186,3 +178,14 @@ private fun AlarmEventType
         AlarmEventType.ERROR ->
             "Errore"
     }
+
+
+private fun formatEventTimestamp(
+    timestamp: Long
+): String =
+    SimpleDateFormat(
+        "dd/MM/yyyy HH:mm:ss",
+        Locale.getDefault()
+    ).format(
+        Date(timestamp)
+    )
