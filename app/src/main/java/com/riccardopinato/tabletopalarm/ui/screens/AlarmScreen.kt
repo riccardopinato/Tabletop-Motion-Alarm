@@ -197,7 +197,7 @@ fun AlarmScreen(
 
         UtilitySectionHeader(
             title = "COUNTDOWN",
-            trailing = "\${settings.countdownSeconds}s"
+            trailing = "${settings.countdownSeconds}s"
         )
 
         Row(
@@ -206,7 +206,7 @@ fun AlarmScreen(
         ) {
             listOf(3, 5, 10, 15).forEach { seconds ->
                 UtilityChoice(
-                    label = "\${seconds}s",
+                    label = "${seconds}s",
                     selected = settings.countdownSeconds == seconds,
                     enabled = runtime.phase == AlarmPhase.DISARMED,
                     onClick = {
@@ -331,7 +331,7 @@ private fun actionLabel(
 ): String =
     when (runtime.phase) {
         AlarmPhase.DISARMED -> "ATTIVA ALLARME"
-        AlarmPhase.ARMING -> "ANNULLA · \${runtime.countdownSeconds}s"
+        AlarmPhase.ARMING -> "ANNULLA · ${runtime.countdownSeconds}s"
         AlarmPhase.CALIBRATING -> "ANNULLA CALIBRAZIONE"
         AlarmPhase.ARMED -> "DISATTIVA"
         AlarmPhase.TRIGGERED -> "SBLOCCA E DISATTIVA"
