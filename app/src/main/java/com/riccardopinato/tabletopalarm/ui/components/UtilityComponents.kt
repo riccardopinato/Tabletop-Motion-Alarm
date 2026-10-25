@@ -2,6 +2,7 @@ package com.riccardopinato.tabletopalarm.ui.components
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.selection.selectable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Row
@@ -18,6 +19,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.unit.dp
 import com.riccardopinato.tabletopalarm.ui.theme.OmniAccent
 import com.riccardopinato.tabletopalarm.ui.theme.OmniDanger
@@ -60,9 +62,15 @@ fun UtilityChoice(
 
     Box(
         modifier = modifier
+            .heightIn(min = 48.dp)
             .clip(RoundedCornerShape(14.dp))
             .background(background)
-            .clickable(enabled = enabled, onClick = onClick)
+            .selectable(
+                selected = selected,
+                enabled = enabled,
+                role = Role.RadioButton,
+                onClick = onClick
+            )
             .padding(horizontal = 16.dp, vertical = 10.dp),
         contentAlignment = Alignment.Center
     ) {
@@ -99,7 +107,11 @@ fun UtilityPrimaryAction(
             .fillMaxWidth()
             .heightIn(min = 56.dp)
             .clip(RoundedCornerShape(18.dp))
-            .clickable(enabled = enabled, onClick = onClick),
+            .clickable(
+                enabled = enabled,
+                role = Role.Button,
+                onClick = onClick
+            ),
         shape = RoundedCornerShape(18.dp),
         color = background,
         tonalElevation = 0.dp,
@@ -171,7 +183,7 @@ fun UtilitySecondaryAction(
 
     Surface(
         modifier = modifier
-            .heightIn(min = 44.dp)
+            .heightIn(min = 48.dp)
             .clip(RoundedCornerShape(14.dp))
             .clickable(enabled = enabled, onClick = onClick),
         shape = RoundedCornerShape(14.dp),
