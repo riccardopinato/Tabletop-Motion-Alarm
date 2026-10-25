@@ -1,4 +1,3 @@
-// TARGET: app/src/main/java/com/riccardopinato/tabletopalarm/sensor/MotionDetector.kt
 package com.riccardopinato.tabletopalarm.sensor
 
 import android.content.Context
@@ -17,10 +16,53 @@ data class MotionTrigger(
     val gyroscopeMagnitude: Float
 )
 
+data class MotionCalibration(
+    val baselineX: Float,
+    val baselineY: Float,
+    val baselineZ: Float,
+    val noiseFloor: Float
+)
+
+internal object MotionDetectionPolicy {
+    private const val NOISE_MULTIPLIER = 5.0f
+
+    fun accelerationThreshold(
+        sensitivity: Sensitivity,
+        noiseFloor: Float
+    ): Float =
+        max(
+            when (sensitivity) {
+                Sensitivity.HIGH -> 0.75f
+                Sensitivity.MEDIUM -> 1.35f
+                Sensitivity.LOW -> 2.20f
+            },
+            noiseFloor * NOISE_MULTIPLIER + 0.20f
+        )
+
+    fun gyroscopeThreshold(
+        sensitivity: Sensitivity
+    ): Float =
+        when (sensitivity) {
+            Sensitivity.HIGH -> 0.22f
+            Sensitivity.MEDIUM -> 0.38f
+            Sensitivity.LOW -> 0.65f
+        }
+
+    fun requiredHits(
+        sensitivity: Sensitivity
+    ): Int =
+        when (sensitivity) {
+            Sensitivity.HIGH -> 2
+            Sensitivity.MEDIUM -> 3
+            Sensitivity.LOW -> 3
+        }
+}
+
 class MotionDetector(
     context: Context,
     private val sensitivity: Sensitivity,
-    private val onCalibrated: (noiseFloor: Float) -> Unit,
+    private val initialCalibration: MotionCalibration? = null,
+    private val onCalibrated: (MotionCalibration) -> Unit,
     private val onMovement: (MotionTrigger) -> Unit
 ) : SensorEventListener {
 
@@ -59,6 +101,18 @@ class MotionDetector(
         reset()
         startedAt = SystemClock.elapsedRealtime()
 
+        initialCalibration?.let {
+            baselineX = it.baselineX
+            baselineY = it.baselineY
+            baselineZ = it.baselineZ
+            noiseFloor = it.noiseFloor
+            filteredX = it.baselineX
+            filteredY = it.baselineY
+            filteredZ = it.baselineZ
+            filterInitialized = true
+            calibrated = true
+        }
+
         val accelOk = sensorManager.registerListener(
             this,
             accel,
@@ -71,6 +125,10 @@ class MotionDetector(
                 it,
                 SENSOR_PERIOD_US
             )
+        }
+
+        if (accelOk && initialCalibration != null) {
+            onCalibrated(initialCalibration)
         }
 
         return accelOk
@@ -136,10 +194,12 @@ class MotionDetector(
             baselineZ
         )
 
-        val threshold = max(
-            baseAccelerationThreshold(),
-            noiseFloor * NOISE_MULTIPLIER + 0.20f
-        )
+        val threshold =
+            MotionDetectionPolicy
+                .accelerationThreshold(
+                    sensitivity,
+                    noiseFloor
+                )
 
         if (delta >= threshold) {
             registerHit(
@@ -173,7 +233,13 @@ class MotionDetector(
         val magnitude =
             sqrt(gx * gx + gy * gy + gz * gz)
 
-        if (magnitude >= gyroscopeThreshold()) {
+        if (
+            magnitude >=
+            MotionDetectionPolicy
+                .gyroscopeThreshold(
+                    sensitivity
+                )
+        ) {
             registerHit(
                 accelerationDelta = 0f,
                 gyroscopeMagnitude = magnitude
@@ -235,7 +301,14 @@ class MotionDetector(
         calibrated = true
         calibrationSamples.clear()
 
-        onCalibrated(noiseFloor)
+        onCalibrated(
+            MotionCalibration(
+                baselineX = baselineX,
+                baselineY = baselineY,
+                baselineZ = baselineZ,
+                noiseFloor = noiseFloor
+            )
+        )
     }
 
     private fun registerHit(
@@ -255,14 +328,13 @@ class MotionDetector(
 
         hitTimes.addLast(now)
 
-        val requiredHits =
-            when (sensitivity) {
-                Sensitivity.HIGH -> 2
-                Sensitivity.MEDIUM -> 3
-                Sensitivity.LOW -> 3
-            }
-
-        if (hitTimes.size >= requiredHits) {
+        if (
+            hitTimes.size >=
+            MotionDetectionPolicy
+                .requiredHits(
+                    sensitivity
+                )
+        ) {
             triggered = true
 
             onMovement(
@@ -276,20 +348,6 @@ class MotionDetector(
         }
     }
 
-    private fun baseAccelerationThreshold(): Float =
-        when (sensitivity) {
-            Sensitivity.HIGH -> 0.75f
-            Sensitivity.MEDIUM -> 1.35f
-            Sensitivity.LOW -> 2.20f
-        }
-
-    private fun gyroscopeThreshold(): Float =
-        when (sensitivity) {
-            Sensitivity.HIGH -> 0.22f
-            Sensitivity.MEDIUM -> 0.38f
-            Sensitivity.LOW -> 0.65f
-        }
-
     private fun reset() {
         calibrationSamples.clear()
         hitTimes.clear()
@@ -297,6 +355,12 @@ class MotionDetector(
         triggered = false
         filterInitialized = false
         noiseFloor = 0f
+        baselineX = 0f
+        baselineY = 0f
+        baselineZ = 0f
+        filteredX = 0f
+        filteredY = 0f
+        filteredZ = 0f
     }
 
     override fun onAccuracyChanged(
@@ -327,6 +391,5 @@ class MotionDetector(
         const val MIN_CALIBRATION_SAMPLES = 20
         const val HIT_WINDOW_MS = 350L
         const val LOW_PASS_ALPHA = 0.72f
-        const val NOISE_MULTIPLIER = 5.0f
     }
 }
