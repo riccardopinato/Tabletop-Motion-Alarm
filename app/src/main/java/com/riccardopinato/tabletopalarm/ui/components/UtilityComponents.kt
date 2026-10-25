@@ -185,7 +185,11 @@ fun UtilitySecondaryAction(
         modifier = modifier
             .heightIn(min = 48.dp)
             .clip(RoundedCornerShape(14.dp))
-            .clickable(enabled = enabled, onClick = onClick),
+            .clickable(
+                enabled = enabled,
+                role = Role.Button,
+                onClick = onClick
+            ),
         shape = RoundedCornerShape(14.dp),
         color = background,
         tonalElevation = 0.dp,
