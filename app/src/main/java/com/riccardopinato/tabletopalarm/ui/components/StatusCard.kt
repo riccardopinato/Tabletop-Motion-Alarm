@@ -9,65 +9,229 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.CheckCircle
-import androidx.compose.material.icons.filled.HourglassTop
-import androidx.compose.material.icons.filled.Warning
-import androidx.compose.material3.Card
-import androidx.compose.material3.CardDefaults
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.CircularProgressIndicator
-import androidx.compose.material3.Icon
 import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.riccardopinato.tabletopalarm.hardware.HardwareSnapshot
 import com.riccardopinato.tabletopalarm.service.AlarmPhase
 import com.riccardopinato.tabletopalarm.service.AlarmRuntimeState
+import com.riccardopinato.tabletopalarm.ui.theme.OmniAccent
+import com.riccardopinato.tabletopalarm.ui.theme.OmniDanger
+import com.riccardopinato.tabletopalarm.ui.theme.OmniHero
+import com.riccardopinato.tabletopalarm.ui.theme.OmniHeroMuted
+import com.riccardopinato.tabletopalarm.ui.theme.OmniHeroSoft
+import com.riccardopinato.tabletopalarm.ui.theme.OmniHeroText
+import com.riccardopinato.tabletopalarm.ui.theme.OmniWarning
 
 @Composable
-fun AlarmStatusCard(runtime: AlarmRuntimeState, countdownTotal: Int, hardware: HardwareSnapshot) {
-    Card(
+fun AlarmStatusCard(
+    runtime: AlarmRuntimeState,
+    countdownTotal: Int,
+    hardware: HardwareSnapshot
+) {
+    if (runtime.phase == AlarmPhase.DISARMED) {
+        HardwarePanel(hardware)
+    } else {
+        ActiveAlarmPanel(
+            runtime = runtime,
+            countdownTotal = countdownTotal
+        )
+    }
+}
+
+@Composable
+private fun HardwarePanel(
+    hardware: HardwareSnapshot
+) {
+    Surface(
         modifier = Modifier.fillMaxWidth(),
-        colors = CardDefaults.cardColors(containerColor = if (runtime.phase == AlarmPhase.TRIGGERED) MaterialTheme.colorScheme.errorContainer else MaterialTheme.colorScheme.surfaceContainerHigh)
+        shape = RoundedCornerShape(26.dp),
+        color = OmniHero,
+        tonalElevation = 0.dp,
+        shadowElevation = 0.dp
     ) {
-        if (runtime.phase == AlarmPhase.DISARMED) HardwareOnlyContent(hardware) else AlarmStateContent(runtime, countdownTotal)
-    }
-}
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 20.dp, vertical = 18.dp),
+            verticalArrangement = Arrangement.spacedBy(11.dp)
+        ) {
+            Text(
+                text = "Hardware",
+                style = MaterialTheme.typography.titleMedium,
+                fontWeight = FontWeight.Bold,
+                color = OmniHeroText
+            )
 
-@Composable private fun HardwareOnlyContent(hardware: HardwareSnapshot) {
-    Column(Modifier.fillMaxWidth().padding(horizontal=20.dp, vertical=14.dp), verticalArrangement=Arrangement.spacedBy(8.dp)) {
-        Text("Hardware", style=MaterialTheme.typography.titleMedium, fontWeight=FontWeight.SemiBold)
-        HardwareRow("Accelerometro", hardware.hasAccelerometer)
-        HardwareRow("Giroscopio", hardware.hasGyroscope)
-        HardwareRow("Flash", hardware.hasFlash)
-        HardwareRow("Vibrazione", hardware.hasVibrator, "Pronta")
-    }
-}
+            HardwareRow(
+                label = "Accelerometro",
+                ready = hardware.hasAccelerometer
+            )
 
-@Composable private fun HardwareRow(label:String, ready:Boolean, readyText:String="Pronto") {
-    Row(Modifier.fillMaxWidth(), verticalAlignment=Alignment.CenterVertically, horizontalArrangement=Arrangement.SpaceBetween) {
-        Text(label, style=MaterialTheme.typography.bodyMedium)
-        Row(verticalAlignment=Alignment.CenterVertically, horizontalArrangement=Arrangement.spacedBy(7.dp)) {
-            Box(Modifier.size(7.dp).clip(CircleShape).background(if(ready) MaterialTheme.colorScheme.tertiary else MaterialTheme.colorScheme.error))
-            Text(if(ready) readyText else "Non disponibile", style=MaterialTheme.typography.bodySmall, fontWeight=FontWeight.Medium, color=MaterialTheme.colorScheme.onSurfaceVariant)
+            HardwareRow(
+                label = "Giroscopio",
+                ready = hardware.hasGyroscope
+            )
+
+            HardwareRow(
+                label = "Flash",
+                ready = hardware.hasFlash
+            )
+
+            HardwareRow(
+                label = "Vibrazione",
+                ready = hardware.hasVibrator,
+                readyText = "Pronta"
+            )
         }
     }
 }
 
-@Composable private fun AlarmStateContent(runtime:AlarmRuntimeState, countdownTotal:Int) {
-    Column(Modifier.fillMaxWidth().padding(horizontal=20.dp, vertical=16.dp), verticalArrangement=Arrangement.spacedBy(10.dp)) {
-        Icon(when(runtime.phase){ AlarmPhase.ARMING,AlarmPhase.CALIBRATING->Icons.Default.HourglassTop; AlarmPhase.ARMED->Icons.Default.CheckCircle; else->Icons.Default.Warning }, null)
-        Text(when(runtime.phase){ AlarmPhase.ARMING->"Armamento in corso"; AlarmPhase.CALIBRATING->"Calibrazione sensori"; AlarmPhase.ARMED->"Protezione attiva"; AlarmPhase.TRIGGERED->"MOVIMENTO RILEVATO"; AlarmPhase.ERROR->"Errore"; AlarmPhase.DISARMED->"Pronto"}, style=MaterialTheme.typography.titleLarge,fontWeight=FontWeight.SemiBold)
-        Text(runtime.message, style=MaterialTheme.typography.bodyMedium, color=MaterialTheme.colorScheme.onSurfaceVariant)
-        if(runtime.phase==AlarmPhase.ARMING){
-            val progress=if(countdownTotal>0) 1f-runtime.countdownSeconds.toFloat()/countdownTotal else 0f
-            LinearProgressIndicator(progress={progress.coerceIn(0f,1f)},modifier=Modifier.fillMaxWidth())
-        } else if(runtime.phase==AlarmPhase.CALIBRATING) CircularProgressIndicator()
+@Composable
+private fun HardwareRow(
+    label: String,
+    ready: Boolean,
+    readyText: String = "Pronto"
+) {
+    Row(
+        modifier = Modifier.fillMaxWidth(),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.SpaceBetween
+    ) {
+        Text(
+            text = label,
+            style = MaterialTheme.typography.bodyMedium,
+            color = OmniHeroMuted
+        )
+
+        Row(
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(8.dp)
+        ) {
+            Box(
+                modifier = Modifier
+                    .size(8.dp)
+                    .clip(CircleShape)
+                    .background(
+                        if (ready) OmniAccent else OmniDanger
+                    )
+            )
+
+            Text(
+                text = if (ready) readyText else "Non disponibile",
+                style = MaterialTheme.typography.labelMedium,
+                fontWeight = FontWeight.SemiBold,
+                color = OmniHeroText
+            )
+        }
     }
 }
+
+@Composable
+private fun ActiveAlarmPanel(
+    runtime: AlarmRuntimeState,
+    countdownTotal: Int
+) {
+    val isTriggered = runtime.phase == AlarmPhase.TRIGGERED
+    val accent = when (runtime.phase) {
+        AlarmPhase.ARMED -> OmniAccent
+        AlarmPhase.ARMING,
+        AlarmPhase.CALIBRATING -> OmniWarning
+        AlarmPhase.TRIGGERED,
+        AlarmPhase.ERROR -> OmniDanger
+        AlarmPhase.DISARMED -> OmniAccent
+    }
+
+    Surface(
+        modifier = Modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(26.dp),
+        color = if (isTriggered) Color(0xFF38191D) else OmniHero,
+        tonalElevation = 0.dp,
+        shadowElevation = 0.dp
+    ) {
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 20.dp, vertical = 20.dp),
+            verticalArrangement = Arrangement.spacedBy(12.dp)
+        ) {
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(10.dp)
+            ) {
+                Box(
+                    modifier = Modifier
+                        .size(12.dp)
+                        .clip(CircleShape)
+                        .background(accent)
+                )
+
+                Text(
+                    text = phaseTitle(runtime.phase),
+                    style = MaterialTheme.typography.titleLarge,
+                    fontWeight = FontWeight.Bold,
+                    color = OmniHeroText
+                )
+            }
+
+            if (runtime.message.isNotBlank()) {
+                Text(
+                    text = runtime.message,
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = OmniHeroMuted
+                )
+            }
+
+            when (runtime.phase) {
+                AlarmPhase.ARMING -> {
+                    val progress =
+                        if (countdownTotal > 0) {
+                            1f - runtime.countdownSeconds.toFloat() / countdownTotal.toFloat()
+                        } else {
+                            0f
+                        }
+
+                    LinearProgressIndicator(
+                        progress = { progress.coerceIn(0f, 1f) },
+                        modifier = Modifier.fillMaxWidth(),
+                        color = accent,
+                        trackColor = OmniHeroSoft
+                    )
+                }
+
+                AlarmPhase.CALIBRATING -> {
+                    CircularProgressIndicator(
+                        modifier = Modifier.size(28.dp),
+                        color = accent,
+                        trackColor = OmniHeroSoft,
+                        strokeWidth = 3.dp
+                    )
+                }
+
+                else -> Unit
+            }
+        }
+    }
+}
+
+private fun phaseTitle(
+    phase: AlarmPhase
+): String =
+    when (phase) {
+        AlarmPhase.DISARMED -> "Hardware"
+        AlarmPhase.ARMING -> "Armamento"
+        AlarmPhase.CALIBRATING -> "Calibrazione"
+        AlarmPhase.ARMED -> "Protezione attiva"
+        AlarmPhase.TRIGGERED -> "Movimento rilevato"
+        AlarmPhase.ERROR -> "Errore"
+    }
