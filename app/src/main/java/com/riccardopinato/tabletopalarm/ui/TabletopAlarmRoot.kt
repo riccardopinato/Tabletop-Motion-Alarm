@@ -11,11 +11,6 @@ import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.History
-import androidx.compose.material.icons.filled.Notifications
-import androidx.compose.material.icons.filled.Person
-import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
@@ -29,7 +24,6 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -58,8 +52,7 @@ import kotlinx.coroutines.launch
 
 private data class BottomDestination(
     val route: String,
-    val label: String,
-    val icon: ImageVector
+    val label: String
 )
 
 @Composable
@@ -121,18 +114,15 @@ fun TabletopAlarmRoot(
             listOf(
                 BottomDestination(
                     route = "alarm",
-                    label = "Allarme",
-                    icon = Icons.Default.Notifications
+                    label = "Allarme"
                 ),
                 BottomDestination(
                     route = "events",
-                    label = "Eventi",
-                    icon = Icons.Default.History
+                    label = "Eventi"
                 ),
                 BottomDestination(
                     route = "profile",
-                    label = "Profilo",
-                    icon = Icons.Default.Person
+                    label = "Profilo"
                 )
             )
 
@@ -285,18 +275,6 @@ private fun UtilityBottomBar(
                     horizontalAlignment = Alignment.CenterHorizontally,
                     verticalArrangement = Arrangement.spacedBy(4.dp)
                 ) {
-                    Icon(
-                        imageVector = item.icon,
-                        contentDescription = item.label,
-                        tint =
-                            if (selected) {
-                                OmniAccent
-                            } else {
-                                MaterialTheme.colorScheme.onSurfaceVariant
-                            },
-                        modifier = Modifier.size(22.dp)
-                    )
-
                     Text(
                         text = item.label,
                         style = MaterialTheme.typography.labelMedium,
