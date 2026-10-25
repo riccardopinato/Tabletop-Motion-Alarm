@@ -64,10 +64,15 @@ android {
         targetCompatibility = JavaVersion.VERSION_17
     }
 
-    kotlinOptions {
-        freeCompilerArgs += "-Xskip-metadata-version-check"
-    }
+}
 
+kotlin {
+    compilerOptions {
+        freeCompilerArgs.add("-Xskip-metadata-version-check")
+    }
+}
+
+android {
     packaging {
         resources {
             excludes += "/META-INF/{AL2.0,LGPL2.1}"
