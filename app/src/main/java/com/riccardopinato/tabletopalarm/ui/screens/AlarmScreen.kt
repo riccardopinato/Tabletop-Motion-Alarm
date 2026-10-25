@@ -1,33 +1,22 @@
-// TARGET: app/src/main/java/com/riccardopinato/tabletopalarm/ui/screens/AlarmScreen.kt
 package com.riccardopinato.tabletopalarm.ui.screens
 
 import android.Manifest
-import android.os.Build
 import android.content.pm.PackageManager
-import androidx.core.content.ContextCompat
+import android.os.Build
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.ExperimentalLayoutApi
-import androidx.compose.foundation.layout.FlowRow
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.weight
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Lock
-import androidx.compose.material.icons.filled.Warning
-import androidx.compose.material3.Button
-import androidx.compose.material3.Card
-import androidx.compose.material3.CardDefaults
-import androidx.compose.material3.FilterChip
-import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -37,7 +26,9 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.core.content.ContextCompat
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.riccardopinato.tabletopalarm.data.SecurityRepository
 import com.riccardopinato.tabletopalarm.data.SettingsRepository
@@ -51,94 +42,103 @@ import com.riccardopinato.tabletopalarm.ui.components.AlarmStatusCard
 import com.riccardopinato.tabletopalarm.ui.components.PermissionInfoDialog
 import com.riccardopinato.tabletopalarm.ui.components.SetPinDialog
 import com.riccardopinato.tabletopalarm.ui.components.SettingSwitchRow
+import com.riccardopinato.tabletopalarm.ui.components.UtilityChoice
+import com.riccardopinato.tabletopalarm.ui.components.UtilityPanel
+import com.riccardopinato.tabletopalarm.ui.components.UtilityPrimaryAction
+import com.riccardopinato.tabletopalarm.ui.components.UtilitySectionHeader
+import com.riccardopinato.tabletopalarm.ui.theme.OmniAccent
 import kotlinx.coroutines.launch
 
-@OptIn(ExperimentalLayoutApi::class)
 @Composable
 fun AlarmScreen(
-    settingsRepository:
-        SettingsRepository,
-    securityRepository:
-        SecurityRepository,
-    hardware:
-        HardwareSnapshot,
-    runtime:
-        AlarmRuntimeState,
-    onRequestDisarm:
-        () -> Unit
+    settingsRepository: SettingsRepository,
+    securityRepository: SecurityRepository,
+    hardware: HardwareSnapshot,
+    runtime: AlarmRuntimeState,
+    onRequestDisarm: () -> Unit
 ) {
-    val context =
-        LocalContext.current
-
-    val scope =
-        rememberCoroutineScope()
+    val context = LocalContext.current
+    val scope = rememberCoroutineScope()
 
     val settings by
-        settingsRepository
-            .settings
-            .collectAsStateWithLifecycle(
-                initialValue =
-                    AppSettings()
-            )
+        settingsRepository.settings.collectAsStateWithLifecycle(
+            initialValue = AppSettings()
+        )
 
     val hasPin by
-        securityRepository
-            .hasPin
-            .collectAsStateWithLifecycle(
-                initialValue = false
-            )
+        securityRepository.hasPin.collectAsStateWithLifecycle(
+            initialValue = false
+        )
 
-    var showSetPin by remember {
-        mutableStateOf(false)
-    }
-
+    var showSetPin by remember { mutableStateOf(false) }
     var showPermissionInfo by remember { mutableStateOf(false) }
 
     val permissionLauncher =
         rememberLauncherForActivityResult(
-            contract =
-                ActivityResultContracts
-                    .RequestMultiplePermissions()
+            contract = ActivityResultContracts.RequestMultiplePermissions()
         ) {
-            AlarmForegroundService
-                .arm(context)
+            AlarmForegroundService.arm(context)
         }
 
     fun missingPermissions(): List<String> = buildList {
-        if (settings.flashEnabled && ContextCompat.checkSelfPermission(context, Manifest.permission.CAMERA) != PackageManager.PERMISSION_GRANTED) add(Manifest.permission.CAMERA)
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU && ContextCompat.checkSelfPermission(context, Manifest.permission.POST_NOTIFICATIONS) != PackageManager.PERMISSION_GRANTED) add(Manifest.permission.POST_NOTIFICATIONS)
+        if (
+            settings.flashEnabled &&
+            ContextCompat.checkSelfPermission(
+                context,
+                Manifest.permission.CAMERA
+            ) != PackageManager.PERMISSION_GRANTED
+        ) {
+            add(Manifest.permission.CAMERA)
+        }
+
+        if (
+            Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU &&
+            ContextCompat.checkSelfPermission(
+                context,
+                Manifest.permission.POST_NOTIFICATIONS
+            ) != PackageManager.PERMISSION_GRANTED
+        ) {
+            add(Manifest.permission.POST_NOTIFICATIONS)
+        }
     }
 
     fun requestArm() {
-        if (!hasPin) { showSetPin = true; return }
+        if (!hasPin) {
+            showSetPin = true
+            return
+        }
+
         val missing = missingPermissions()
-        if (missing.isEmpty()) AlarmForegroundService.arm(context) else showPermissionInfo = true
+
+        if (missing.isEmpty()) {
+            AlarmForegroundService.arm(context)
+        } else {
+            showPermissionInfo = true
+        }
     }
 
     Column(
-        modifier =
-            Modifier
-                .fillMaxSize()
-                .verticalScroll(
-                    rememberScrollState()
-                )
-                .padding(20.dp),
-        verticalArrangement =
-            Arrangement.spacedBy(
-                16.dp
-            )
+        modifier = Modifier
+            .fillMaxSize()
+            .verticalScroll(rememberScrollState())
+            .padding(horizontal = 18.dp, vertical = 14.dp),
+        verticalArrangement = Arrangement.spacedBy(12.dp)
     ) {
-        Spacer(
-            Modifier.height(4.dp)
-        )
+        Column(
+            verticalArrangement = Arrangement.spacedBy(1.dp)
+        ) {
+            Text(
+                text = "TABLETOP",
+                style = MaterialTheme.typography.labelMedium,
+                fontWeight = FontWeight.Bold,
+                color = OmniAccent
+            )
 
-        Text(
-            "Tabletop Motion Alarm",
-            style =
-                MaterialTheme
-                    .typography
-                    .headlineSmall
-        )
+            Text(
+                text = "Motion Alarm",
+                style = MaterialTheme.typography.headlineLarge
+            )
+        }
 
         AlarmStatusCard(
             runtime = runtime,
@@ -147,243 +147,129 @@ fun AlarmScreen(
         )
 
         if (!hasPin) {
-            Card(
-                colors =
-                    CardDefaults
-                        .cardColors(
-                            containerColor =
-                                MaterialTheme
-                                    .colorScheme
-                                    .errorContainer
-                        )
+            UtilityPanel(
+                containerColor = MaterialTheme.colorScheme.errorContainer
             ) {
                 Column(
-                    Modifier.padding(
-                        16.dp
-                    )
+                    modifier = Modifier.padding(16.dp),
+                    verticalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
                     Text(
-                        "Imposta prima un PIN",
-                        style =
-                            MaterialTheme
-                                .typography
-                                .titleMedium
+                        text = "PIN richiesto",
+                        style = MaterialTheme.typography.titleMedium,
+                        fontWeight = FontWeight.Bold,
+                        color = MaterialTheme.colorScheme.onErrorContainer
                     )
 
                     Text(
-                        "Il PIN impedisce che chi muove " +
-                            "il telefono possa spegnere " +
-                            "subito l'allarme."
+                        text = "Imposta un PIN prima di armare l'allarme.",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onErrorContainer
                     )
 
-                    Spacer(
-                        Modifier.height(
-                            12.dp
-                        )
+                    UtilityPrimaryAction(
+                        label = "Imposta PIN",
+                        enabled = true,
+                        onClick = { showSetPin = true }
                     )
-
-                    OutlinedButton(
-                        onClick = {
-                            showSetPin = true
-                        }
-                    ) {
-                        Icon(
-                            Icons.Default.Lock,
-                            contentDescription =
-                                null
-                        )
-
-                        Text(
-                            "  Imposta PIN"
-                        )
-                    }
                 }
             }
         }
 
-        Button(
-            modifier =
-                Modifier.fillMaxWidth(),
-            enabled =
-                hardware
-                    .hasAccelerometer,
+        UtilityPrimaryAction(
+            label = actionLabel(runtime),
+            enabled = hardware.hasAccelerometer,
+            destructive = runtime.phase == AlarmPhase.TRIGGERED,
             onClick = {
                 when (runtime.phase) {
-                    AlarmPhase.DISARMED ->
-                        requestArm()
+                    AlarmPhase.DISARMED -> requestArm()
 
                     AlarmPhase.ARMING,
                     AlarmPhase.CALIBRATING,
                     AlarmPhase.ERROR ->
-                        AlarmForegroundService
-                            .disarm(context)
+                        AlarmForegroundService.disarm(context)
 
                     AlarmPhase.ARMED,
                     AlarmPhase.TRIGGERED ->
                         onRequestDisarm()
                 }
             }
-        ) {
-            Text(
-                when (runtime.phase) {
-                    AlarmPhase.DISARMED ->
-                        "ATTIVA ALLARME"
-
-                    AlarmPhase.ARMING ->
-                        "ANNULLA " +
-                            "(${runtime.countdownSeconds}s)"
-
-                    AlarmPhase.CALIBRATING ->
-                        "ANNULLA CALIBRAZIONE"
-
-                    AlarmPhase.ARMED ->
-                        "DISATTIVA"
-
-                    AlarmPhase.TRIGGERED ->
-                        "SBLOCCA E DISATTIVA"
-
-                    AlarmPhase.ERROR ->
-                        "CHIUDI"
-                }
-            )
-        }
-
-        Text(
-            "Countdown",
-            style =
-                MaterialTheme
-                    .typography
-                    .titleMedium
         )
 
-        FlowRow(
-            horizontalArrangement =
-                Arrangement.spacedBy(
-                    8.dp
-                )
-        ) {
-            listOf(
-                3,
-                5,
-                10,
-                15
-            ).forEach {
-                seconds ->
+        UtilitySectionHeader(
+            title = "COUNTDOWN",
+            trailing = "\${settings.countdownSeconds}s"
+        )
 
-                FilterChip(
-                    selected =
-                        settings
-                            .countdownSeconds ==
-                        seconds,
-                    enabled =
-                        runtime.phase ==
-                        AlarmPhase.DISARMED,
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.spacedBy(8.dp)
+        ) {
+            listOf(3, 5, 10, 15).forEach { seconds ->
+                UtilityChoice(
+                    label = "\${seconds}s",
+                    selected = settings.countdownSeconds == seconds,
+                    enabled = runtime.phase == AlarmPhase.DISARMED,
                     onClick = {
                         scope.launch {
-                            settingsRepository
-                                .setCountdown(
-                                    seconds
-                                )
+                            settingsRepository.setCountdown(seconds)
                         }
                     },
-                    label = {
-                        Text("${seconds}s")
-                    }
+                    modifier = Modifier.weight(1f)
                 )
             }
         }
 
-        Text(
-            "Sensibilità",
-            style =
-                MaterialTheme
-                    .typography
-                    .titleMedium
+        UtilitySectionHeader(
+            title = "SENSIBILITÀ",
+            trailing = settings.sensitivity.label
         )
 
-        FlowRow(
-            horizontalArrangement =
-                Arrangement.spacedBy(
-                    8.dp
-                )
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.spacedBy(8.dp)
         ) {
-            Sensitivity.entries
-                .forEach {
-                    sensitivity ->
-
-                    FilterChip(
-                        selected =
-                            settings
-                                .sensitivity ==
-                            sensitivity,
-                        enabled =
-                            runtime.phase ==
-                            AlarmPhase
-                                .DISARMED,
-                        onClick = {
-                            scope.launch {
-                                settingsRepository
-                                    .setSensitivity(
-                                        sensitivity
-                                    )
-                            }
-                        },
-                        label = {
-                            Text(
-                                sensitivity
-                                    .label
-                            )
+            Sensitivity.entries.forEach { sensitivity ->
+                UtilityChoice(
+                    label = sensitivity.label,
+                    selected = settings.sensitivity == sensitivity,
+                    enabled = runtime.phase == AlarmPhase.DISARMED,
+                    onClick = {
+                        scope.launch {
+                            settingsRepository.setSensitivity(sensitivity)
                         }
-                    )
-                }
+                    },
+                    modifier = Modifier.weight(1f)
+                )
+            }
         }
 
-        Card {
+        UtilityPanel {
             Column(
-                Modifier.padding(
-                    16.dp
-                )
+                modifier = Modifier.padding(horizontal = 16.dp, vertical = 10.dp)
             ) {
                 SettingSwitchRow(
                     title = "Sirena",
-                    subtitle =
-                        "Tono d'allarme generato " +
-                        "direttamente dall'app.",
-                    checked =
-                        settings
-                            .soundEnabled,
-                    enabled =
-                        runtime.phase ==
-                        AlarmPhase.DISARMED,
+                    subtitle = "Tono di allarme locale",
+                    checked = settings.soundEnabled,
+                    enabled = runtime.phase == AlarmPhase.DISARMED,
                     onCheckedChange = {
                         scope.launch {
-                            settingsRepository
-                                .setSoundEnabled(
-                                    it
-                                )
+                            settingsRepository.setSoundEnabled(it)
                         }
                     }
                 )
 
                 SettingSwitchRow(
                     title = "Vibrazione",
-                    subtitle =
-                        "Pattern continuo quando " +
-                        "viene rilevato movimento.",
-                    checked =
-                        settings
-                            .vibrationEnabled,
+                    subtitle = "Pattern continuo durante l'allarme",
+                    checked = settings.vibrationEnabled,
                     enabled =
-                        runtime.phase ==
-                            AlarmPhase.DISARMED &&
-                            hardware
-                                .hasVibrator,
+                        runtime.phase == AlarmPhase.DISARMED &&
+                            hardware.hasVibrator,
                     onCheckedChange = {
                         scope.launch {
-                            settingsRepository
-                                .setVibrationEnabled(
-                                    it
-                                )
+                            settingsRepository.setVibrationEnabled(it)
                         }
                     }
                 )
@@ -391,52 +277,34 @@ fun AlarmScreen(
                 SettingSwitchRow(
                     title = "Flash LED",
                     subtitle =
-                        if (
-                            hardware.hasFlash
-                        ) {
-                            "Lampeggio rapido durante l'allarme."
+                        if (hardware.hasFlash) {
+                            "Lampeggio rapido durante l'allarme"
                         } else {
-                            "Flash non disponibile su questo dispositivo."
+                            "Non disponibile su questo dispositivo"
                         },
-                    checked =
-                        settings.flashEnabled &&
-                            hardware.hasFlash,
+                    checked = settings.flashEnabled && hardware.hasFlash,
                     enabled =
-                        runtime.phase ==
-                            AlarmPhase.DISARMED &&
+                        runtime.phase == AlarmPhase.DISARMED &&
                             hardware.hasFlash,
                     onCheckedChange = {
                         scope.launch {
-                            settingsRepository
-                                .setFlashEnabled(
-                                    it
-                                )
+                            settingsRepository.setFlashEnabled(it)
                         }
                     }
                 )
             }
         }
 
-
-        Spacer(
-            Modifier.height(80.dp)
-        )
+        Spacer(Modifier.height(76.dp))
     }
 
     if (showSetPin) {
         SetPinDialog(
-            onDismiss = {
-                showSetPin = false
-            },
-            onSave = {
-                pin ->
-
+            onDismiss = { showSetPin = false },
+            onSave = { pin ->
                 scope.launch {
-                    securityRepository
-                        .setPin(pin)
-
-                    showSetPin =
-                        false
+                    securityRepository.setPin(pin)
+                    showSetPin = false
                 }
             }
         )
@@ -444,12 +312,29 @@ fun AlarmScreen(
 
     if (showPermissionInfo) {
         val missing = missingPermissions()
+
         PermissionInfoDialog(
             needsCamera = missing.contains(Manifest.permission.CAMERA),
-            needsNotifications = Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU && missing.contains(Manifest.permission.POST_NOTIFICATIONS),
-            onContinue = { showPermissionInfo = false; permissionLauncher.launch(missing.toTypedArray()) },
+            needsNotifications =
+                Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU &&
+                    missing.contains(Manifest.permission.POST_NOTIFICATIONS),
+            onContinue = {
+                showPermissionInfo = false
+                permissionLauncher.launch(missing.toTypedArray())
+            },
             onDismiss = { showPermissionInfo = false }
         )
     }
-
 }
+
+private fun actionLabel(
+    runtime: AlarmRuntimeState
+): String =
+    when (runtime.phase) {
+        AlarmPhase.DISARMED -> "ATTIVA ALLARME"
+        AlarmPhase.ARMING -> "ANNULLA · \${runtime.countdownSeconds}s"
+        AlarmPhase.CALIBRATING -> "ANNULLA CALIBRAZIONE"
+        AlarmPhase.ARMED -> "DISATTIVA"
+        AlarmPhase.TRIGGERED -> "SBLOCCA E DISATTIVA"
+        AlarmPhase.ERROR -> "CHIUDI"
+    }
