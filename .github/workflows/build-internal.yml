@@ -5,6 +5,8 @@ on:
   push:
     tags:
       - "internal-v*"
+    branches:
+      - "internal-release/**"
 
 permissions:
   contents: read
