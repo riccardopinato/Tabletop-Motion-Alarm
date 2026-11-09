@@ -24,3 +24,8 @@ Custom utility design system inspired by cleaner-style Android interfaces; Mater
 - Periodic promotional price: EUR 3.99
 - All features are included after purchase
 - No in-app feature split and no Play Billing paywall inside the app
+
+
+## Template Notion
+
+[Catalogo di ricerca](docs/TEMPLATE_NOTION/README.md): nessun template assegnato in questa fase.
